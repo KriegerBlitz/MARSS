@@ -1,84 +1,55 @@
-"use client";
-
-import React from 'react';
-import { TrendingUp, AlertTriangle, Newspaper, Activity } from 'lucide-react';
-
-interface BentoBoxProps {
-  title: string;
-  children: React.ReactNode;
-  icon: React.ElementType;
-  span?: string;
-}
-
-const Box = ({ title, children, icon: Icon, span = "" }: BentoBoxProps) => (
-    <div className={`bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col ${span}`}>
-      <div className="flex items-center gap-2 mb-4 text-blue-400">
-        <Icon size={18} />
-        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">{title}</h2>
-      </div>
-      <div className="flex-1 overflow-hidden">{children}</div>
-    </div>
-);
-
-export default function Dashboard() {
+export default function Home() {
   return (
-      <main className="min-h-screen bg-[#050505] text-slate-200 p-6">
-        {/* Top Navigation / Title */}
-        <div className="flex justify-between items-end mb-8 border-b border-slate-800 pb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">MACRO-AI TERMINAL</h1>
-            <p className="text-slate-500 text-sm font-mono">Status: Connected to Live Market Feed</p>
+      <main className="min-h-screen p-8 max-w-7xl mx-auto">
+        <header className="mb-12">
+          <h1 className="text-4xl font-bold tracking-tighter mb-2">MACRO-AI TERMINAL</h1>
+          <p className="text-zinc-500 font-mono text-sm">Status: Connected to Live Market Feed</p>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[200px]">
+          {/* System Risk Box */}
+          <div className="md:col-span-2 md:row-span-1 border border-zinc-800 bg-zinc-950 p-6 rounded-3xl flex flex-col justify-between">
+            <h2 className="text-zinc-400 text-sm font-medium uppercase tracking-wider">System Risk</h2>
+            <div className="flex items-end justify-between">
+              <span className="text-3xl font-bold text-red-500">ELEVATED</span>
+              <span className="text-2xl">📈</span>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text- xs text-slate-500 uppercase">System Risk</p>
-            <p className="text-sm font-bold text-red-500">ELEVATED</p>
+
+          {/* AI Confidence Box */}
+          <div className="md:col-span-1 md:row-span-1 border border-zinc-800 bg-zinc-950 p-6 rounded-3xl flex flex-col justify-between">
+            <h2 className="text-zinc-400 text-sm font-medium uppercase tracking-wider">AI Confidence</h2>
+            <div className="flex items-end justify-between">
+              <span className="text-4xl font-bold">92%</span>
+              <span className="text-2xl text-blue-500">🎯</span>
+            </div>
           </div>
 
-        </div>
-
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[160px]">
-
-          {/* Main Graph Space */}
-          <Box title="Predictive Market Analysis" icon={TrendingUp} span="md:col-span-3 md:row-span-3">
-            <div className="h-full w-full bg-slate-800/20 rounded-xl border border-slate-800 flex items-center justify-center">
-              <p className="text-slate-600 animate-pulse text-sm font-mono">Initializing Neural Engine...</p>
-            </div>
-          </Box>
-
-          {/* Confidence Widget */}
-          <Box title="AI Confidence" icon={Activity} span="md:col-span-1 md:row-span-1">
-            <div className="flex items-center justify-center h-full">
-              <span className="text-5xl font-black text-emerald-500">92<span className="text-xl">%</span></span>
-            </div>
-          </Box>
-
-          {/* News & Sentiment */}
-          <Box title="AI News Analyst" icon={Newspaper} span="md:col-span-1 md:row-span-2">
-            <div className="space-y-4 pt-2">
-              <div className="p-2 bg-emerald-500/10 border-l-2 border-emerald-500">
-                <p className="text-[10px] text-emerald-400 font-bold">BULLISH SENSE</p>
-                <p className="text-xs">Fed Rate hold confirmed...</p>
+          {/* Predictive Analysis */}
+          <div className="md:col-span-1 md:row-span-2 border border-zinc-800 bg-zinc-950 p-6 rounded-3xl">
+            <h2 className="text-zinc-400 text-sm font-medium uppercase tracking-wider mb-4">Predictive Analysis</h2>
+            <div className="space-y-4">
+              <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
+                <div className="h-full bg-green-500 w-[70%]"></div>
               </div>
-              <div className="p-2 bg-red-500/10 border-l-2 border-red-500">
-                <p className="text-[10px] text-red-400 font-bold">BEARISH SENSE</p>
-                <p className="text-xs">Crude Oil inventory spike...</p>
+              <p className="text-xs text-zinc-500 font-mono">Initializing Neural Engine...</p>
+            </div>
+          </div>
+
+          {/* AI News Analyst (The one we'll link to the JSON) */}
+          <div className="md:col-span-3 md:row-span-1 border border-zinc-800 bg-zinc-950 p-6 rounded-3xl">
+            <h2 className="text-zinc-400 text-sm font-medium uppercase tracking-wider mb-2">AI News Analyst</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-green-500 text-xs font-bold uppercase">Bullish Sense</p>
+                <p className="text-sm text-zinc-300">Fed Rate hold confirmed...</p>
+              </div>
+              <div>
+                <p className="text-red-500 text-xs font-bold uppercase">Bearish Sense</p>
+                <p className="text-sm text-zinc-300">Crude Oil inventory spike...</p>
               </div>
             </div>
-          </Box>
-
-          {/* Risk Correlation */}
-          <Box title="Asset Correlation" icon={AlertTriangle} span="md:col-span-4 md:row-span-1">
-            <div className="flex gap-4 items-center h-full overflow-x-auto pb-2">
-              {['TSLA', 'AAPL', 'NVDA', 'BTC', 'GOLD'].map((ticker) => (
-                  <div key={ticker} className="min-w-[120px] p-3 bg-slate-800/40 rounded-lg border border-slate-700">
-                    <p className="text-[10px] text-slate-500 font-bold">{ticker}</p>
-                    <p className="text-sm font-mono">+0.82 Impact</p>
-                  </div>
-              ))}
-            </div>
-          </Box>
-
+          </div>
         </div>
       </main>
   );

@@ -1,15 +1,19 @@
-/* DELETE the @import line! */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
+@source "../**/*.{js,ts,jsx,tsx,mdx}";
+@theme {
+  /* In v4, we map our CSS variables to Tailwind theme variables inside @theme */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 
-/* If you aren't using Tailwind v4, delete this @theme block too */
-/* It's likely causing a syntax error in your current setup */
+  /* Setting up your Geist fonts if you're using the Next.js defaults */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -18,8 +22,10 @@
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
 }
