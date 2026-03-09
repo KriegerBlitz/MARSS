@@ -1,0 +1,32 @@
+# Environment Variables
+.env
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Data Files (auto-generated, don't push)
+sst_input.json
+sst_output.json
+timeline.json
+node_modules
+.next
+
+# Logs
+*.log
+*.csv
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
