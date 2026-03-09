@@ -9,13 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "autoprefixer": "^10.4.27",
     "clsx": "latest",
     "endent": "latest",
     "lucide-react": "latest",
     "next": "latest",
+    "postcss": "^8.5.8",
     "react": "latest",
     "react-dom": "latest",
-    "tailwind-merge": "latest"
+    "tailwind-merge": "latest",
+    "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
     "@types/node": "25.3.5",
