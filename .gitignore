@@ -1,0 +1,28 @@
+# ── Schroders NLP Engine — .gitignore ──
+
+# Environment Variables (protect API keys)
+.env
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Data Files (prevent accidental test data pushes)
+*.csv
+*.json
+*.log
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
