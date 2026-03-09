@@ -170,3 +170,11 @@ def dashboard():
         "timeline": timeline[-5:],  # last 5 snapshots
         "sst":      sst
     }
+
+from summarizer import generate_summary, load_news
+
+@app.get("/briefing")
+def briefing():
+    news = load_news("sst_input.json")
+    summary = generate_summary(news)
+    return {"briefing": summary}
