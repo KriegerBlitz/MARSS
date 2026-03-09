@@ -1,181 +1,118 @@
-"""
-Schroders Macro-Economic NLP Processing Engine — FastAPI Server (V2)
-====================================================================
-Exposes a POST endpoint that runs the V2 NLP pipeline on a financial
-news article and returns structured macroeconomic insights with
-15-theme taxonomy, probabilistic forecasts, and portfolio relevance tags.
-"""
+import json
+from feeds import fetch_articles
+from scorer import score_article, compute_confidence, compute_theme_strength, compute_theme_matches, compute_sentiment
+from heat_score import calculate_heat, display_heatmap, compute_article_heat, compute_recency
+from alerts import run_alerts
+from timeline import save_snapshot
 
-from __future__ import annotations
+def run():
+    print("🔄 Fetching articles...\n")
+    articles = fetch_articles()
+    print(f"✅ Fetched {len(articles)} articles\n")
 
-import logging
-import time
-from contextlib import asynccontextmanager
-from datetime import datetime
+    # -----------------------------
+    # SCORED ARTICLES
+    # -----------------------------
+    print("=" * 60)
+    print("📰 TOP ARTICLES BY THEME SCORE")
+    print("=" * 60)
 
-from fastapi import FastAPI, HTTPException, status
-from fastapi.middleware.cors import CORSMiddleware
+    results = []
+    sst_payload = []  # this goes to SST engine
 
-from pydantic_models import (
-    ArticleInput,
-    ArticleOutput,
-    PipelineResult,
-    NamedEntities,
-    FutureOdd,
-    MacroTheme,
-    HealthResponse,
-)
-from nlp_pipeline import ModelManager, run_full_pipeline
+    for article in articles:
+        match_scores = compute_theme_matches(article["text"])
+        scores = score_article(article["text"])
 
-# ──────────────────────────────────────────────
-# Logging
-# ──────────────────────────────────────────────
+        if not scores:
+            continue
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-)
-logger = logging.getLogger(__name__)
+        strength = compute_theme_strength(match_scores)
+        confidence = compute_confidence(match_scores)
+        sentiment = compute_sentiment(article["text"])
+        recency = compute_recency(article["published"])
 
-
-# ──────────────────────────────────────────────
-# Application Lifespan (model pre-loading)
-# ──────────────────────────────────────────────
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Pre-load heavy ML models at startup."""
-    logger.info("🚀  Starting model pre-load …")
-    manager = ModelManager()
-
-    try:
-        _ = manager.spacy_nlp
-        logger.info("✅  spaCy model ready.")
-    except Exception as exc:
-        logger.error("❌  Failed to load spaCy model: %s", exc)
-
-    try:
-        _ = manager.finbert
-        logger.info("✅  FinBERT model ready.")
-    except Exception as exc:
-        logger.error("❌  Failed to load FinBERT model: %s", exc)
-
-    logger.info("🟢  Server is ready to accept requests.")
-    yield
-    logger.info("🔴  Shutting down …")
-
-
-# ──────────────────────────────────────────────
-# FastAPI Application
-# ──────────────────────────────────────────────
-
-app = FastAPI(
-    title="Schroders Macro-Economic NLP Engine (V2)",
-    description=(
-        "Ingests raw financial news articles and returns structured "
-        "macroeconomic insights via a 15-theme taxonomy, probabilistic "
-        "event forecasting, portfolio relevance tagging, and FinBERT "
-        "sentiment analysis — all powered by OpenAI Structured Outputs."
-    ),
-    version="2.0.0",
-    lifespan=lifespan,
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-# ──────────────────────────────────────────────
-# Endpoints
-# ──────────────────────────────────────────────
-
-@app.get("/health", response_model=HealthResponse, tags=["System"])
-async def health_check() -> HealthResponse:
-    """Return server health and model-load status."""
-    manager = ModelManager()
-    return HealthResponse(
-        timestamp=datetime.utcnow().isoformat() + "Z",
-        models_loaded={
-            "spacy_en_core_web_sm": manager._spacy_model is not None,
-            "finbert": manager._finbert_pipeline is not None,
-        },
-    )
-
-
-@app.post(
-    "/api/v1/process_article",
-    response_model=ArticleOutput,
-    status_code=status.HTTP_200_OK,
-    tags=["Pipeline"],
-    summary="Process a financial news article (V2)",
-    description=(
-        "Runs the V2 pipeline: preprocessing → LLM structured extraction "
-        "(theme + summary + forecasts) → NER + portfolio tags → FinBERT "
-        "sentiment. Returns a single merged JSON payload."
-    ),
-)
-async def process_article(article: ArticleInput) -> ArticleOutput:
-    """
-    Accept a raw financial news article and run the V2 pipeline:
-        1. Text Preprocessing
-        2. LLM Structured Extraction (theme, summary, future_odds)
-        3. Financial NER + Portfolio Relevance Tags
-        4. Sentiment & Intensity Analysis (FinBERT)
-    """
-    logger.info(
-        "Processing article: '%s' from %s",
-        article.headline[:80],
-        article.source_name,
-    )
-    start = time.perf_counter()
-
-    try:
-        result = run_full_pipeline(
-            headline=article.headline,
-            body_text=article.body_text,
-        )
-    except Exception as exc:
-        logger.exception("Pipeline failed for article: %s", article.headline)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Pipeline processing error: {exc}",
+        heat = compute_article_heat(
+            match_scores,
+            article["text"],
+            article["published"],
+            len(articles)
         )
 
-    elapsed = round(time.perf_counter() - start, 3)
-    logger.info("Pipeline completed in %.3fs", elapsed)
+        results.append({
+            "title":      article["title"],
+            "published":  article["published"],
+            "source":     article["source"],
+            "themes":     scores,
+            "strength":   strength,
+            "confidence": confidence
+        })
 
-    return ArticleOutput(
-        processing_time_seconds=elapsed,
-        input_metadata=article,
-        pipeline_result=PipelineResult(
-            cleaned_text=result["cleaned_text"],
-            primary_macro_theme=result["primary_macro_theme"],
-            summary=result["summary"],
-            future_odds=[FutureOdd(**fo) for fo in result["future_odds"]],
-            portfolio_relevance_tags=result["portfolio_relevance_tags"],
-            named_entities=NamedEntities(**result["named_entities"]),
-            sentiment_score=result["sentiment_score"],
-            intensity_score=result["intensity_score"],
-        ),
-    )
+        # Clean JSON for SST engine
+        sst_payload.append({
+            "title":        article["title"],
+            "published":    article["published"],
+            "source":       article["source"],
+            "theme scores": scores,
+            "heat":         heat,
+            "confidence":   confidence,
+            "sentiment":    sentiment,
+            "recency":      recency,
+            "strength":     strength
+        })
 
+    # Sort by top theme score
+    results.sort(key=lambda x: list(x["themes"].values())[0], reverse=True)
 
-# ──────────────────────────────────────────────
-# Entrypoint
-# ──────────────────────────────────────────────
+    for r in results[:10]:
+        print(f"\n📌 {r['title']}")
+        print(f"   Published:  {r['published']}")
+        print(f"   Strength:   {r['strength']}")
+        print(f"   Confidence: {r['confidence']}")
+        top_themes = list(r["themes"].items())[:3]
+        print(f"   Themes:     {top_themes}")
+
+    # -----------------------------
+    # HEATMAP
+    # -----------------------------
+    print("\n")
+    heat = calculate_heat(articles)
+    display_heatmap(heat)
+
+    # -----------------------------
+    # SAVE SNAPSHOT
+    # -----------------------------
+    save_snapshot(heat)
+    print("\n✅ Snapshot saved to timeline\n")
+
+    # -----------------------------
+    # ALERTS
+    # -----------------------------
+    print("=" * 60)
+    print("🚨 ALERT CHECK")
+    print("=" * 60)
+    alerts = run_alerts(articles)
+    if alerts:
+        print(f"\n⚠️  {len(alerts)} ALERTS TRIGGERED\n")
+        for alert in alerts:
+            print(f"  [{alert['category']}] Trigger: '{alert['trigger']}'")
+            print(f"  Title: {alert['title']}")
+            print(f"  Published: {alert['published']}\n")
+    else:
+        print("No alerts triggered.")
+
+    # -----------------------------
+    # EXPORT JSON FOR SST ENGINE
+    # -----------------------------
+    with open("sst_input.json", "w") as f:
+        json.dump({
+            "heatmap":  heat,
+            "articles": sst_payload,
+            "alerts":   alerts
+        }, f, indent=2)
+
+    print("\n✅ SST input saved to sst_input.json\n")
+
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info",
-    )
+    run()

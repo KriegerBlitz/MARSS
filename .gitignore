@@ -1,6 +1,4 @@
-# ── Schroders NLP Engine — .gitignore ──
-
-# Environment Variables (protect API keys)
+# Environment Variables
 .env
 
 # Virtual Environments
@@ -14,10 +12,14 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Data Files (prevent accidental test data pushes)
-*.csv
-*.json
+# Data Files (auto-generated, don't push)
+sst_input.json
+sst_output.json
+timeline.json
+
+# Logs
 *.log
+*.csv
 
 # OS Generated Files
 .DS_Store
