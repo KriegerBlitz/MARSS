@@ -1,4 +1,4 @@
-{
+  {
   "compilerOptions": {
     "target": "ES2017",
     "lib": [
@@ -12,6 +12,7 @@
     "noEmit": true,
     "incremental": true,
     "module": "esnext",
+    "paths": { "@/*": ["./src/*"] },
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
