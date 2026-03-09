@@ -16,6 +16,8 @@ __pycache__/
 sst_input.json
 sst_output.json
 timeline.json
+node_modules
+.next
 
 # Logs
 *.log
